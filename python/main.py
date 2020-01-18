@@ -36,6 +36,29 @@ def computeCircleEnclosure(circleData):
     print(x1, x2)
 
 
+def cannyHough():
+    img = cv2.imread('../oriental_picture.png')
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bilateralFilter(gray, 5, 100, 50)
+    edges = cv2.Canny(gray, 50, 120)
+
+    minLineLength = 50
+    maxLineGap = 10
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 20, minLineLength, maxLineGap)
+    print(len(lines))
+    for i in range(0, 2):
+        for x1, y1, x2, y2 in lines[i]:
+            cv2.line(img, (x1, y1), (x2, y2), (0, 255, 255), 2)
+            print(x1, y1)
+            print(x2, y2)
+
+    cv2.imshow("edges", edges)
+    cv2.imshow("lines", img)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+
 if __name__ == '__main__':
     print("We go again!!")
     CircleDetection()
+    cannyHough()
