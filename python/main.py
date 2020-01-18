@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import imutils
 
 
 def CircleDetection():
@@ -58,7 +59,70 @@ def cannyHough():
     cv2.destroyAllWindows()
 
 
+def detect(c):
+    shape = "unidentified"
+    peri = cv2.arcLength(c, True)
+    approx = cv2.approxPolyDP(c, 0.04 * peri, True)
+
+    if len(approx) == 3:
+        shape = "triangle"
+
+    elif len(approx) == 4:
+        # compute the bounding box of the contour and use the bounding box to compute the aspect ratio
+        (x, y, w, h) = cv2.boundingRect(approx)
+        ar = w / float(h)
+
+        coordinates = [x, y, (x + w), (h + y)]
+
+        # a square will have an aspect ratio that is approximately equal to one, otherwise, the shape is a rectangle
+        shape = "square" if ar == 1 else "rectangle"
+
+    elif len(approx) == 5:
+        shape = "pentagon"
+
+    else:
+        shape = "circle"
+
+    return shape, coordinates
+
+
+def redDetect():
+    img = cv2.imread('../oriental_picture.png')
+    boundaries = [([0, 0, 0], [0, 0, 255])]
+
+    lower = np.array(boundaries[0][0], dtype="uint8")
+    upper = np.array(boundaries[0][1], dtype="uint8")
+
+    # find the colors within the specified boundaries and apply the mask
+    mask = cv2.inRange(img, lower, upper)
+    output = cv2.bitwise_and(img, img, mask=mask)
+
+    cv2.imshow("images", np.hstack([img, output]))
+    cv2.waitKey(0)
+
+    # convert the resized image to grayscale, blur it slightly, and threshold it
+    gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
+
+    # find contours in the thresholded image and initialize the shape detector
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+
+    # loop over the contours
+    for c in cnts:
+        shape, coordinates = detect(c)
+        print(shape, coordinates)
+        c = c.astype("int")
+        cv2.drawContours(output, [c], -1, (0, 255, 0), 2)
+
+    cv2.imshow("Image", output)
+    cv2.waitKey(0)
+
+
 if __name__ == '__main__':
     print("We go again!!")
     CircleDetection()
     cannyHough()
+    redDetect()
