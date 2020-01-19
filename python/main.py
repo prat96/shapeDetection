@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import imutils
-import json
+import json, os
 
 
 def CircleDetection():
@@ -13,14 +13,12 @@ def CircleDetection():
                                param1=20, param2=50, minRadius=40, maxRadius=90)
 
     circles = np.uint16(np.around(circles))
-    for i in circles[0, :]:
-        # draw the outer circle
-        cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
-        # draw the center of the circle
-        cv2.circle(cimg, (i[0], i[1]), 2, (0, 0, 255), 3)
 
-    points = [i[0], i[1], i[2]]
-    cv2.imshow('detected circles', cimg)
+    for i in circles[0, :]:
+        cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
+        points = [i[0], i[1], i[2]]
+
+    cv2.imshow('Detected circles', cimg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -35,6 +33,7 @@ def computeCircleEnclosure(circleData):
     x1 = ((cx - r), (cy - r))
     x2 = ((cx + r), (cy + r))
 
+    # Register the shape in JSON
     registerJsonShape("Circle", (x1, x2))
 
 
@@ -49,7 +48,6 @@ def cannyHough():
     minLineLength = 50
     maxLineGap = 10
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 20, minLineLength, maxLineGap)
-    print(len(lines))
     for i in range(0, 2):
         for x1, y1, x2, y2 in lines[i]:
             cv2.line(img, (x1, y1), (x2, y2), (0, 255, 255), 2)
@@ -65,10 +63,8 @@ def cannyHough():
     # Register the shape in JSON
     registerJsonShape(shape, (rectLines[0][0], rectLines[1][1]))
 
-    cv2.imshow("edges", edges)
     cv2.imshow("lines", img)
     cv2.waitKey()
-    cv2.destroyAllWindows()
 
 
 def detect(c):
@@ -158,6 +154,7 @@ def registerJsonShape(shapeType, coordinates):
 
 
 if __name__ == '__main__':
+    os.system("rm data_file.json")
     redDetection()
     cannyHough()
     CircleDetection()
