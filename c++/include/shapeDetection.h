@@ -11,7 +11,8 @@
 class shapeDetection {
 public:
     static void circleDetection();
-    void cannyHough();
+    static void cannyHough();
+    static void redDetection();
 
 private:
 

@@ -60,15 +60,64 @@ void shapeDetection::cannyHough() {
     Canny(bilat, edges, 50, 120);
 
     vector<Vec4i> lines;
-    HoughLinesP(edges, lines, 1, CV_PI/180, 20, 50, 10);
+    HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 50, 10);
 
-    for (size_t i=0; i<2; i++) {
+    for (size_t i = 0; i < 2; i++) {
         Vec4i l = lines[i];
         line(image, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 1, LINE_AA);
         cout << "Check" << Point(l[0], l[1]) << " " << Point(l[2], l[3]) << endl;
     }
     // Show result image
     imshow("Result Image", image);
+    waitKey(0);
+    destroyAllWindows();
+}
+
+void shapeDetection::redDetection() {
+    Mat image = imread("../../oriental_picture.png");
+
+    if (!image.data) {
+        printf("No image data \n");
+        exit(-1);
+    }
+    Mat mask, redOutput, gray, blurred, thresh;
+    inRange(image, Scalar(0, 0, 0), Scalar(0, 0, 255), mask);
+
+    bitwise_and(image, image, redOutput, mask);
+
+    cvtColor(redOutput, gray, COLOR_BGR2GRAY);
+    GaussianBlur(gray, blurred, Size(5, 5), 0);
+    threshold(blurred, thresh, 60, 255, THRESH_BINARY);
+
+    vector<vector<Point>> contours;
+    vector<Point> approx;
+
+    cv::findContours(thresh.clone(), contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+    for (int i = 0; i < contours.size(); i++) {
+        cv::approxPolyDP(cv::Mat(contours[i]), approx, cv::arcLength(cv::Mat(contours[i]), true) * 0.04, true);
+
+        if (approx.size() == 3) {
+            cout << "Triangles!!" << endl;    // Triangles
+        } else if (approx.size() == 4) {
+            // Number of vertices of polygonal curve
+            int vtc = approx.size();
+
+            auto rect = boundingRect(approx);
+            cout << rect.x << " " << rect.y << " " << rect.width << " " << rect.height << endl;
+
+            if ((rect.width / rect.height) == 1) {
+                cout << "Square!!" << endl;
+            } else {
+                cout << "Rectangle!!" << endl;
+            }
+        } else {
+            cout << "Circle!" << endl;
+        }
+    }
+
+
+    imshow("output", thresh);
     waitKey(0);
 }
 
@@ -78,5 +127,6 @@ int main(int argc, char **argv) {
     auto sD = new shapeDetection;
     sD->circleDetection();
     sD->cannyHough();
+    sD->redDetection();
     return 0;
 }
