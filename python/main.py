@@ -43,6 +43,8 @@ def cannyHough():
     gray = cv2.bilateralFilter(gray, 5, 100, 50)
     edges = cv2.Canny(gray, 50, 120)
 
+    rectLines = []
+    shape = "uninitialized"
     minLineLength = 50
     maxLineGap = 10
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 20, minLineLength, maxLineGap)
@@ -50,8 +52,14 @@ def cannyHough():
     for i in range(0, 2):
         for x1, y1, x2, y2 in lines[i]:
             cv2.line(img, (x1, y1), (x2, y2), (0, 255, 255), 2)
-            print(x1, y1)
-            print(x2, y2)
+            rectLines.append(([x1, y1], [x2, y2]))
+
+    # Checking if lines intersect to form a rectangle or square
+    if rectLines[0][0][0] == rectLines[1][0][0] and rectLines[0][1][0] == rectLines[1][1][0]:
+        if (rectLines[1][0][1] - rectLines[0][0][1]) != (rectLines[0][0][1] - rectLines[0][0][0]):
+            shape = "Rectangle"
+        else:
+            shape = "Square"
 
     cv2.imshow("edges", edges)
     cv2.imshow("lines", img)
@@ -96,9 +104,6 @@ def redDetect():
     # find the colors within the specified boundaries and apply the mask
     mask = cv2.inRange(img, lower, upper)
     output = cv2.bitwise_and(img, img, mask=mask)
-
-    cv2.imshow("images", np.hstack([img, output]))
-    cv2.waitKey(0)
 
     # convert the resized image to grayscale, blur it slightly, and threshold it
     gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
