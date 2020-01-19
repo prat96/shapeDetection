@@ -58,14 +58,21 @@ void shapeDetection::cannyHough() {
     Canny(bilat, edges, 50, 120);
 
     vector<Vec4i> lines;
+    vector<int> x1, x2;
     HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 50, 10);
 
     for (size_t i = 0; i < 2; i++) {
         Vec4i l = lines[i];
         line(image, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 2, LINE_AA);
-        cout << "Check" << Point(l[0], l[1]) << " " << Point(l[2], l[3]) << endl;
     }
-    // Show result image
+
+    x1.push_back(lines[0][1]);
+    x1.push_back(lines[0][0]);
+    x2.push_back(lines[1][1]);
+    x2.push_back(lines[1][0]);
+
+    registerJsonShape("Rectangle", x1, x2);
+
     imshow("Result Image", image);
     waitKey(0);
     destroyAllWindows();
@@ -89,7 +96,8 @@ void shapeDetection::redDetection() {
 
     vector<vector<Point>> contours;
     vector<Point> approx;
-    string shape;
+    vector<int> x1, x2;
+    const char *shape = nullptr;
 
     cv::findContours(thresh.clone(), contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
@@ -100,7 +108,10 @@ void shapeDetection::redDetection() {
             shape = "Triangle";
         } else if (approx.size() == 4) {
             auto rect = boundingRect(approx);
-            cout << rect.x << " " << rect.y << " " << rect.width << " " << rect.height << endl;
+            x1.push_back(rect.y);
+            x1.push_back(rect.x);
+            x2.push_back((rect.y + rect.height));
+            x2.push_back((rect.x + rect.width));
 
             if ((rect.width / rect.height) == 1) {
                 shape = "Square";
@@ -112,14 +123,14 @@ void shapeDetection::redDetection() {
         }
     }
 
+    registerJsonShape(shape, x1, x2);
+
     imshow("output", thresh);
     waitKey(0);
     destroyAllWindows();
 }
 
 void shapeDetection::registerJsonShape(const char *shape, vector<int> x1, vector<int> x2) {
-    cout << shape << " " << x1[0] << " " << x2[0] << endl;
-
     StringBuffer s;
     PrettyWriter<StringBuffer> writer(s);
 
@@ -155,7 +166,7 @@ int main(int argc, char **argv) {
 
     auto sD = new shapeDetection;
     sD->redDetection();
-//    sD->cannyHough();
-//    sD->circleDetection();
+    sD->cannyHough();
+    sD->circleDetection();
     return 0;
 }
