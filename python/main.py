@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import imutils
+import json
 
 
 def CircleDetection():
@@ -34,7 +35,7 @@ def computeCircleEnclosure(circleData):
     x1 = ((cx - r), (cy - r))
     x2 = ((cx + r), (cy + r))
 
-    print(x1, x2)
+    registerJsonShape("Circle", (x1, x2))
 
 
 def cannyHough():
@@ -61,6 +62,9 @@ def cannyHough():
         else:
             shape = "Square"
 
+    # Register the shape in JSON
+    registerJsonShape(shape, (rectLines[0][0], rectLines[1][1]))
+
     cv2.imshow("edges", edges)
     cv2.imshow("lines", img)
     cv2.waitKey()
@@ -82,8 +86,8 @@ def detect(c):
 
         coordinates = [x, y, (x + w), (h + y)]
 
-        # a square will have an aspect ratio that is approximately equal to one, otherwise, the shape is a rectangle
-        shape = "square" if ar == 1 else "rectangle"
+        # a square will have an aspect ratio that is equal to one, otherwise, the shape is a rectangle
+        shape = "Square" if ar == 1 else "Rectangle"
 
     elif len(approx) == 5:
         shape = "pentagon"
@@ -94,7 +98,7 @@ def detect(c):
     return shape, coordinates
 
 
-def redDetect():
+def redDetection():
     img = cv2.imread('../oriental_picture.png')
     boundaries = [([0, 0, 0], [0, 0, 255])]
 
@@ -105,7 +109,6 @@ def redDetect():
     mask = cv2.inRange(img, lower, upper)
     output = cv2.bitwise_and(img, img, mask=mask)
 
-    # convert the resized image to grayscale, blur it slightly, and threshold it
     gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
@@ -122,12 +125,39 @@ def redDetect():
         c = c.astype("int")
         cv2.drawContours(output, [c], -1, (0, 255, 0), 2)
 
-    cv2.imshow("Image", output)
+    # Register the shape in JSON
+    registerJsonShape(shape, ((coordinates[0], coordinates[1]), (coordinates[2], coordinates[3])))
+
+    cv2.imshow("Output", output)
     cv2.waitKey(0)
 
 
+def registerJsonShape(shapeType, coordinates):
+    print(shapeType, coordinates)
+    shape = {
+        "boundingPoly": {
+            "vertices": [
+                {
+                    "x": int(coordinates[0][0]),
+                    "y": int(coordinates[0][1])
+                },
+                {
+                    "x": int(coordinates[1][0]),
+                    "y": int(coordinates[1][1])
+                }
+            ]
+        },
+        "description": shapeType
+    }
+
+    print(shape)
+    with open("data_file.json", "a+") as write_file:
+        json.dump(shape, write_file)
+
+    write_file.close()
+
+
 if __name__ == '__main__':
-    print("We go again!!")
-    CircleDetection()
+    redDetection()
     cannyHough()
-    redDetect()
+    CircleDetection()
