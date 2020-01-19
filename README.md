@@ -24,6 +24,7 @@ Output json will be stored in build directory.
 ### Dependencies:
 - OpenCV(v3.x)
 - imutils `pip install imutils`
+- numpy
 
 ### Usage:
 `cd python`
