@@ -6,7 +6,7 @@
 
 using namespace cv;
 using namespace std;
-
+using namespace rapidjson;
 
 void shapeDetection::circleDetection() {
     Mat image = imread("../../oriental_picture.png");
@@ -31,17 +31,15 @@ void shapeDetection::circleDetection() {
     }
 
     vector<int> x1, x2;
-    // Compute Enclosing box around the circle
 
+    // Compute Enclosing box around the circle
     x1.push_back(circles[0][1] - circles[0][2]);
     x1.push_back(circles[0][0] - circles[0][2]);
     x2.push_back(circles[0][1] + circles[0][2]);
     x2.push_back(circles[0][0] + circles[0][2]);
 
-    cout << x1[0] << " " << x1[1] << endl;
-    cout << x2[0] << " " << x2[1] << endl;
+    registerJsonShape("Circle", x1, x2);
 
-    namedWindow("output");
     imshow("output", image);
     waitKey(0);
 }
@@ -64,7 +62,7 @@ void shapeDetection::cannyHough() {
 
     for (size_t i = 0; i < 2; i++) {
         Vec4i l = lines[i];
-        line(image, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 1, LINE_AA);
+        line(image, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 2, LINE_AA);
         cout << "Check" << Point(l[0], l[1]) << " " << Point(l[2], l[3]) << endl;
     }
     // Show result image
@@ -91,6 +89,7 @@ void shapeDetection::redDetection() {
 
     vector<vector<Point>> contours;
     vector<Point> approx;
+    string shape;
 
     cv::findContours(thresh.clone(), contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
@@ -98,35 +97,65 @@ void shapeDetection::redDetection() {
         cv::approxPolyDP(cv::Mat(contours[i]), approx, cv::arcLength(cv::Mat(contours[i]), true) * 0.04, true);
 
         if (approx.size() == 3) {
-            cout << "Triangles!!" << endl;    // Triangles
+            shape = "Triangle";
         } else if (approx.size() == 4) {
-            // Number of vertices of polygonal curve
-            int vtc = approx.size();
-
             auto rect = boundingRect(approx);
             cout << rect.x << " " << rect.y << " " << rect.width << " " << rect.height << endl;
 
             if ((rect.width / rect.height) == 1) {
-                cout << "Square!!" << endl;
+                shape = "Square";
             } else {
-                cout << "Rectangle!!" << endl;
+                shape = "Rectangle";
             }
         } else {
-            cout << "Circle!" << endl;
+            shape = "Circle";
         }
     }
 
-
     imshow("output", thresh);
     waitKey(0);
+    destroyAllWindows();
 }
 
+void shapeDetection::registerJsonShape(const char *shape, vector<int> x1, vector<int> x2) {
+    cout << shape << " " << x1[0] << " " << x2[0] << endl;
+
+    StringBuffer s;
+    PrettyWriter<StringBuffer> writer(s);
+
+    writer.StartObject();
+    writer.Key("boundingPoly");
+    writer.StartObject();
+    writer.String("vertices");
+    writer.StartArray();
+    writer.StartObject();
+    writer.Key("x");
+    writer.Uint(x1[1]);
+    writer.Key("y");
+    writer.Uint(x1[0]);
+    writer.EndObject();
+    writer.StartObject();
+    writer.Key("x");
+    writer.Uint(x2[1]);
+    writer.Key("y");
+    writer.Uint(x2[0]);
+    writer.EndObject();
+    writer.EndArray();
+    writer.EndObject();
+    writer.Key("description");
+    writer.String(shape);
+    writer.EndObject();
+
+
+    cout << "CHECK\n" << s.GetString() << endl;
+
+}
 
 int main(int argc, char **argv) {
 
     auto sD = new shapeDetection;
-    sD->circleDetection();
-    sD->cannyHough();
     sD->redDetection();
+//    sD->cannyHough();
+//    sD->circleDetection();
     return 0;
 }

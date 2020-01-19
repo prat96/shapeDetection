@@ -7,14 +7,22 @@
 
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
+#include <sys/stat.h>
 
 class shapeDetection {
 public:
     static void circleDetection();
+
     static void cannyHough();
+
     static void redDetection();
 
 private:
+
+    static void registerJsonShape(const char *shape, std::vector<int> x1, std::vector<int> x2);
 
 };
 
