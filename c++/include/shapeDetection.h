@@ -11,6 +11,7 @@
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <sys/stat.h>
+#include <fstream>
 
 class shapeDetection {
 public:

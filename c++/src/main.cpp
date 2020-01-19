@@ -40,7 +40,7 @@ void shapeDetection::circleDetection() {
 
     registerJsonShape("Circle", x1, x2);
 
-    imshow("output", image);
+    imshow("Blue circle", image);
     waitKey(0);
 }
 
@@ -73,7 +73,7 @@ void shapeDetection::cannyHough() {
 
     registerJsonShape("Rectangle", x1, x2);
 
-    imshow("Result Image", image);
+    imshow("White box", image);
     waitKey(0);
     destroyAllWindows();
 }
@@ -125,7 +125,7 @@ void shapeDetection::redDetection() {
 
     registerJsonShape(shape, x1, x2);
 
-    imshow("output", thresh);
+    imshow("Red box", redOutput);
     waitKey(0);
     destroyAllWindows();
 }
@@ -157,14 +157,15 @@ void shapeDetection::registerJsonShape(const char *shape, vector<int> x1, vector
     writer.String(shape);
     writer.EndObject();
 
-
-    cout << "CHECK\n" << s.GetString() << endl;
-
+    ofstream outfile;
+    outfile.open("output.json", std::ios_base::app); // append instead of overwrite
+    outfile << s.GetString() << endl;
 }
 
 int main(int argc, char **argv) {
 
     auto sD = new shapeDetection;
+    system("rm output.json");
     sD->redDetection();
     sD->cannyHough();
     sD->circleDetection();
